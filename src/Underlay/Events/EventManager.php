@@ -2,65 +2,63 @@
 
 namespace Underlay\Events;
 
-use Underlay\Dispatcable;
-use InvalidArgument;
 use Exception;
-use Closure;
+use InvalidArgument;
 
 class EventManager
-{   
+{
     /**
-     * Called when an listener throws an exception. 
-     * 
+     * Called when an listener throws an exception.
+     *
      * @var string
      */
     const ON_EXCEPTION = 'on_exception';
 
     /**
      * Called when an event had been fired.
-     * 
+     *
      * @var string
      */
     const FIRED = 'fired';
 
     /**
      * Called when and event had been fired.
-     * 
+     *
      * @var string
      */
     const TERMINATED = 'terminated';
 
     /**
      * List with all functions listeners.
-     * 
+     *
      * @var array
      */
     protected $listeners = [];
 
     /**
      * List with all internal events.
-     * 
+     *
      * @var array
      */
     protected $internalEvents = [];
 
-    /** 
+    /**
      * List with all events been fired on manager.
-     * 
+     *
      * @var array
      */
     protected $terminatedEvents = [];
 
     /**
      * The dispachable instance to dispatch event listeners.
-     * 
+     *
      * @var Underlay\Contracts\Dispatchable
      */
     protected $dispatcher;
 
     /**
      * Class constructor.
-     * 
+     *
      * @param  Underlay\Contracts\Dispatchable $dispatcher
      * @return void
      */
@@ -72,7 +70,7 @@ class EventManager
 
     /**
      * Register a function to listen for a event to be fired.
-     * 
+     *
      * @param  string $event
      * @param  mixed  $function
      * @param  array  $parameters
@@ -82,15 +80,15 @@ class EventManager
     {
         // Save the function as a listener for the event. The first item is
         // the function to execute and the second is the parameters array.
-        // A listeneter can be registered even without an existent event, but 
+        // A listeneter can be registered even without an existent event, but
         // if in any case the event is registered the listener will be called.
-        $this->listeners[$event][] = [$function, is_array($parameters) ? 
-            $parameters : [$parameters]];
+        $this->listeners[$event][] = [$function, is_array($parameters) ?
+            $parameters : [$parameters], ];
     }
 
     /**
      * Return all the registered events.
-     * 
+     *
      * @param  bool $excludeInternals
      * @return array
      */
@@ -98,7 +96,7 @@ class EventManager
     {
         $events = array_filter(array_keys($this->listeners), function ($event) {
 
-            // Removes the ones that is in the list of terminated events. 
+            // Removes the ones that is in the list of terminated events.
             return ! in_array($event, $this->terminatedEvents);
         });
 
@@ -108,12 +106,12 @@ class EventManager
             $events = array_merge($events, $this->internalEvents);
         }
 
-        return $events; 
+        return $events;
     }
 
     /**
      * Return a list will all listeners of the given event.
-     * 
+     *
      * @param  string $event
      * @return array
      */
@@ -126,7 +124,7 @@ class EventManager
 
     /**
      * Fire a given event and notify the listeners.
-     * 
+     *
      * @param  string $event
      * @param  mixed  $attachments
      * @return void
@@ -139,14 +137,14 @@ class EventManager
 
     /**
      * Dispatch each listener function.
-     * 
+     *
      * @param  string $event
      * @param  array  $attachments
      * @return void
      */
     protected function notifyListeners(string $event, array $attachments)
     {
-        foreach($this->listeners[$event] as $listener) {
+        foreach ($this->listeners[$event] as $listener) {
             try {
 
                 // Add parameters to attachments.
@@ -156,7 +154,7 @@ class EventManager
                 $this->dispatcher->dispatch($listener[0], $attachments);
             } catch (Exception $ex) {
                 if (in_array(static::ON_EXCEPTION, $this->getEvents())) {
-                    
+
                     // Call the on exception internal event.
                     $this->fire(static::ON_EXCEPTION, $ex);
                 } else {
@@ -164,7 +162,7 @@ class EventManager
                     // Throw the unhandled exception.
                     throw $ex;
                 }
-            } 
+            }
         }
 
         // Terminate the event.
@@ -172,18 +170,18 @@ class EventManager
     }
 
     /**
-     * Register all the internal events. The internal events are essential for 
-     * the event operation. The  
-     * 
+     * Register all the internal events. The internal events are essential for
+     * the event operation. The.
+     *
      * @return void
      */
     protected function registerInternalEvents()
     {
         // Execute the internal fired event.
         $this->listen(static::FIRED, function ($event, $attachments) {
-            
+
             // Receive an event as parameter when and event has been fired.
-            // Then we call the event resolver to dispatch a registered event.  
+            // Then we call the event resolver to dispatch a registered event.
             $this->resolveEvent($event, $attachments);
         });
 
@@ -191,20 +189,20 @@ class EventManager
         $this->listen(static::TERMINATED, function ($event) {
 
             // Receive an event that had been terminated and must be locked.
-            $this->terminate($event); 
+            $this->terminate($event);
         });
 
-        // Define the reserved internal events. 
+        // Define the reserved internal events.
         $this->internalEvents = [
             static::FIRED,
             static::ON_EXCEPTION,
-            static::TERMINATED
+            static::TERMINATED,
         ];
     }
 
     /**
      * Resolve an event been fired.
-     * 
+     *
      * @param  string $event
      * @param  mixed  $attachments
      * @return void
@@ -215,23 +213,23 @@ class EventManager
         // Any call to not registred events will result in anything.
         if (in_array($event, $this->getEvents(true))) {
 
-            // Notifyl listeners of an event.   
+            // Notifyl listeners of an event.
             $this->notifyListeners($event, is_array($attachments) ?
                 $attachments : [$attachments]);
-        } 
+        }
     }
 
     /**
      * Lock the event for the manager. A locked event can not be called
      * again. And the listeners will be not avaiable anymore.
-     * 
+     *
      * @param  string $event
      * @return void
      */
     protected function terminate(string $event)
     {
         if (in_array($event, $this->getEvents(true))) {
-            
+
             // Register a new terminated event. Only apply for public events.
             // Internal events are not terminated.
             $this->terminatedEvents[] = $event;
@@ -240,17 +238,17 @@ class EventManager
 
     /**
      * Fire an internal event on the manager.
-     * 
+     *
      * @param  string          $event
      * @param  mixed           $attachments
      * @return void
-     * 
+     *
      * @throws InvalidArgument If the event does not exist.
      */
     protected function fireInternal(string $event, $attachments)
     {
         if (in_array($event, $this->internalEvents)) {
-            
+
             // Call the event reslver internally.
             $this->resolveEvent($event, $attachments);
         } else {
