@@ -5,8 +5,8 @@ namespace Underlay\Contracts;
 interface Dispatchable
 {
     /**
-     * Dispatch an array of functions. 
-     * 
+     * Dispatch an array of functions.
+     *
      * @param  string|callable $functions
      * @param  array           $parameters
      * @return mixed
