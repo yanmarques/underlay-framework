@@ -17,6 +17,7 @@
     },
     "autoload": {
         "psr-4": {
+            "Underlay\\": "src/Underlay",
             "Underlay\\Tests\\": "tests/"
         }
     },
