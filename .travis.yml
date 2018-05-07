@@ -4,7 +4,7 @@ php:
   - "7.1"
   
 install:
-  - "composer install && composer dump-autoload -a"
+  - "composer install && composer clear-cache && composer dump-autoload -o -a"
 
 script: "./vendor/bin/phpunit"
   
