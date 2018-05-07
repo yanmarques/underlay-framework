@@ -1,11 +1,7 @@
 language: "php"
 
 php: 
-  - "7.0"
   - "7.1"
-
-install:
-  - "composer update"
 
 script: "./vendor/bin/phpunit"
   
